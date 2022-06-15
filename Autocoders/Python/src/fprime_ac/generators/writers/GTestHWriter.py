@@ -39,7 +39,7 @@ class GTestHWriter(GTestWriterBase.GTestWriterBase):
         str = ""
         for param in params:
             name = param[0]
-            str += ", _" + name
+            str += f", _{name}"
         return str
 
     def _initFilesWrite(self, obj):

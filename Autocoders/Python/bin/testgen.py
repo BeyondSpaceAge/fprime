@@ -177,44 +177,38 @@ def parse_component(the_parsed_component_xml, xml_filename, opt):
         del xml_parser_obj
 
     model = CompFactory.CompFactory.getInstance()
-    component_model = model.create(
-        the_parsed_component_xml, parsed_port_xml_list, parsed_serializable_xml_list
+    return model.create(
+        the_parsed_component_xml,
+        parsed_port_xml_list,
+        parsed_serializable_xml_list,
     )
-
-    return component_model
 
 
 def generate_tests(opt, component_model):
     """
     Generates test component cpp/hpp files
     """
-    unitTestFiles = []
-
     if VERBOSE:
         print(f"Generating test files for {component_model.get_xml_filename()}")
 
-    # TesterBase.hpp
-    unitTestFiles.append(ComponentTestHWriter.ComponentTestHWriter())
-
-    # TesterBase.cpp
-    unitTestFiles.append(ComponentTestCppWriter.ComponentTestCppWriter())
-
-    # GTestBase.hpp
-    unitTestFiles.append(GTestHWriter.GTestHWriter())
-
-    # GTestbase.cpp
-    unitTestFiles.append(GTestCppWriter.GTestCppWriter())
+    unitTestFiles = [
+        ComponentTestHWriter.ComponentTestHWriter(),
+        ComponentTestCppWriter.ComponentTestCppWriter(),
+        GTestHWriter.GTestHWriter(),
+        GTestCppWriter.GTestCppWriter(),
+    ]
 
     if not os.path.exists("Tester.hpp") or opt.force_tester:
         if os.path.exists("Tester.hpp"):
             os.remove("Tester.hpp")
             os.remove("Tester.cpp")
 
-        # Tester.hpp
-        unitTestFiles.append(TestImplHWriter.TestImplHWriter())
-
-        # Tester.cpp
-        unitTestFiles.append(TestImplCppWriter.TestImplCppWriter())
+        unitTestFiles.extend(
+            (
+                TestImplHWriter.TestImplHWriter(),
+                TestImplCppWriter.TestImplCppWriter(),
+            )
+        )
 
     #
     # The idea here is that each of these generators is used to create
@@ -223,7 +217,7 @@ def generate_tests(opt, component_model):
     for file in unitTestFiles:
         file.write(component_model)
         if VERBOSE:
-            print("Generated %s" % file.toString())
+            print(f"Generated {file.toString()}")
 
     time.sleep(3)
 
@@ -235,23 +229,24 @@ def generate_tests(opt, component_model):
     if opt.maincpp:
         testhpp = open("Tester.hpp")
 
-        find_tests = False
         test_cases = []
         override_dict = {}
-        override_name = None  # // @Testname: decorator comment
+        override_name = None
+        find_tests = False
         for line in testhpp:
             if "// Tests" in line:
                 find_tests = True
             elif "private:" in line:
                 find_tests = False
 
-            if find_tests:
-                if "// @Testname:" in line:
+            if "// @Testname:" in line:
+                if find_tests:
                     # Remove whitespace
                     override_name = line[line.index("// @Testname:") + 13 :].strip()
                     # Store location of all names to override
                     override_dict[override_name] = len(test_cases)
-                elif "void " in line:
+            elif "void " in line:
+                if find_tests:
                     # Parse method name out of definition
                     name = line[line.index("void ") + 5 :].replace("();", "").strip()
                     test_cases.append(name)
@@ -266,11 +261,10 @@ def generate_tests(opt, component_model):
         main_writer.write(component_model)
         if VERBOSE:
             print("Generated TestMain.cpp")
-    else:
-        if not os.path.exists("TestMain.cpp"):
-            TestMainWriter.TestMainWriter().write(component_model)
-            if VERBOSE:
-                print("Generated TestMain.cpp")
+    elif not os.path.exists("TestMain.cpp"):
+        TestMainWriter.TestMainWriter().write(component_model)
+        if VERBOSE:
+            print("Generated TestMain.cpp")
 
     if VERBOSE:
         print(f"Generated test files for {component_model.get_xml_filename()}")
@@ -297,7 +291,7 @@ def main():
     #  Parse the input Topology XML filename
     #
     if len(args) == 0:
-        print("ERROR: Usage: %s [options] xml_filename" % sys.argv[0])
+        print(f"ERROR: Usage: {sys.argv[0]} [options] xml_filename")
         return
     elif len(args) == 1:
         xml_filename = args[0]
@@ -308,22 +302,19 @@ def main():
     #
     # Check for BUILD_ROOT variable for XML port searches
     #
-    if not opt.build_root_overwrite is None:
+    if opt.build_root_overwrite is not None:
         set_build_roots(opt.build_root_overwrite)
-        if VERBOSE:
-            print("BUILD_ROOT set to %s" % ",".join(get_build_roots()))
     else:
-        if ("BUILD_ROOT" in os.environ.keys()) == False:
+        if "BUILD_ROOT" not in os.environ.keys():
             print("ERROR: Build root not set to root build path...")
             sys.exit(-1)
         set_build_roots(os.environ["BUILD_ROOT"])
-        if VERBOSE:
-            print("BUILD_ROOT set to %s" % ",".join(get_build_roots()))
-
+    if VERBOSE:
+        print(f'BUILD_ROOT set to {",".join(get_build_roots())}')
     #
     # Write test component
     #
-    if not "Ai" in xml_filename:
+    if "Ai" not in xml_filename:
         print("ERROR: Missing Ai at end of file name...")
         raise OSError
     #

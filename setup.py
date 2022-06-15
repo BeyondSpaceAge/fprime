@@ -54,6 +54,6 @@ setup(
     install_requires=[
         f"fprime-tools=={ versions['FPRIME_TOOLS_VERSION'] }",
         f"fprime-gds=={ versions['FPRIME_GDS_VERSION'] }",
-        f"fprime-fpp @ git+https://github.com/fprime-community/fprime-fpp.git",  # Always install this version from git
+        "fprime-fpp @ git+https://github.com/fprime-community/fprime-fpp.git",
     ],
 )
