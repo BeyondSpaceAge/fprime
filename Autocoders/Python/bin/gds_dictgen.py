@@ -108,20 +108,18 @@ def generate_xml_dict(the_parsed_topology_xml, xml_filename, opt):
             parsed_xml_dict[comp.get_type()] = comp.get_comp_xml()
         else:
             PRINT.info(
-                "Components with type {} aren't in the topology model.".format(
-                    comp.get_type()
-                )
+                f"Components with type {comp.get_type()} aren't in the topology model."
             )
+
 
     #
     xml_list = []
-    for parsed_xml_type in parsed_xml_dict:
-        if parsed_xml_dict[parsed_xml_type] is None:
+    for parsed_xml_type, value in parsed_xml_dict.items():
+        if value is None:
             print(
-                "ERROR: XML of type {} is being used, but has not been parsed correctly. Check if file exists or add xml file with the 'import_component_type' tag to the Topology file.".format(
-                    parsed_xml_type
-                )
+                f"ERROR: XML of type {parsed_xml_type} is being used, but has not been parsed correctly. Check if file exists or add xml file with the 'import_component_type' tag to the Topology file."
             )
+
             raise Exception()
         xml_list.append(parsed_xml_dict[parsed_xml_type])
 
@@ -139,9 +137,7 @@ def generate_xml_dict(the_parsed_topology_xml, xml_filename, opt):
         comp_type = comp.get_type()
         comp_name = comp.get_name()
         comp_id = int(comp.get_base_id())
-        PRINT.debug(
-            "Processing {} [{}] ({})".format(comp_name, comp_type, hex(comp_id))
-        )
+        PRINT.debug(f"Processing {comp_name} [{comp_type}] ({hex(comp_id)})")
 
         top_dict_gen.set_current_comp(comp)
 
@@ -164,13 +160,13 @@ def generate_xml_dict(the_parsed_topology_xml, xml_filename, opt):
         "Ai.xml", "Dictionary.xml"
     )
     if VERBOSE:
-        print("Generating XML dictionary %s" % fileName)
+        print(f"Generating XML dictionary {fileName}")
     fd = open(
         fileName, "wb"
     )  # Note: binary forces the same encoding of the source files
     fd.write(etree.tostring(topology_dict, pretty_print=True))
     if VERBOSE:
-        print("Generated XML dictionary %s" % fileName)
+        print(f"Generated XML dictionary {fileName}")
 
     return topology_model
 
@@ -202,19 +198,16 @@ def main():
     #
     # Check for BUILD_ROOT variable for XML port searches
     #
-    if not opt.build_root_overwrite is None:
+    if opt.build_root_overwrite is not None:
         set_build_roots(opt.build_root_overwrite)
-        if VERBOSE:
-            print(f'BUILD_ROOT set to {",".join(get_build_roots())}')
     else:
-        if ("BUILD_ROOT" in os.environ.keys()) == False:
+        if "BUILD_ROOT" not in os.environ.keys():
             print("ERROR: Build root not set to root build path...")
             sys.exit(-1)
         set_build_roots(os.environ["BUILD_ROOT"])
-        if VERBOSE:
-            print(f'BUILD_ROOT set to {",".join(get_build_roots())}')
-
-    if not "Ai" in xml_filename:
+    if VERBOSE:
+        print(f'BUILD_ROOT set to {",".join(get_build_roots())}')
+    if "Ai" not in xml_filename:
         print("ERROR: Missing Ai at end of file name...")
         raise OSError
 

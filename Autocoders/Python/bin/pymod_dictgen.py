@@ -118,11 +118,10 @@ def generate_pymods(the_parsed_topology_xml, xml_filename, opt):
             print(
                 f"Generating pymods for topology {the_parsed_topology_xml.get_namespace()}::{the_parsed_topology_xml.get_name()}"
             )
-    else:
-        if VERBOSE:
-            print(
-                f"Generating pymods for topology {the_parsed_topology_xml.get_name()}"
-            )
+    elif VERBOSE:
+        print(
+            f"Generating pymods for topology {the_parsed_topology_xml.get_name()}"
+        )
     model = TopoFactory.TopoFactory.getInstance()
     topology_model = model.create(the_parsed_topology_xml)
 
@@ -131,62 +130,45 @@ def generate_pymods(the_parsed_topology_xml, xml_filename, opt):
     for comp in the_parsed_topology_xml.get_instances():
         if comp.get_type() in topology_model.get_base_id_dict():
             parsed_xml_dict[comp.get_type()] = comp.get_comp_xml()
-        else:
-            if VERBOSE:
-                print(
-                    "Components with type {} aren't in the topology model.".format(
-                        comp.get_type()
-                    )
-                )
+        elif VERBOSE:
+            print(f"Components with type {comp.get_type()} aren't in the topology model.")
 
     #
     # Hack to set up deployment path for instanced dictionaries (if one exists remove old one)
     #
-    if opt.dict_dir is None:
-        os.environ["DICT_DIR"] = os.getcwd()
-    else:
-        os.environ["DICT_DIR"] = opt.dict_dir
-
+    os.environ["DICT_DIR"] = os.getcwd() if opt.dict_dir is None else opt.dict_dir
     xml_list = []
-    for parsed_xml_type in parsed_xml_dict:
-        if parsed_xml_dict[parsed_xml_type] is None:
+    for parsed_xml_type, value in parsed_xml_dict.items():
+        if value is None:
             print(
-                "ERROR: XML of type {} is being used, but has not been parsed correctly. Check if file exists or add xml file with the 'import_component_type' tag to the Topology file.".format(
-                    parsed_xml_type
-                )
+                f"ERROR: XML of type {parsed_xml_type} is being used, but has not been parsed correctly. Check if file exists or add xml file with the 'import_component_type' tag to the Topology file."
             )
+
             raise Exception()
         xml_list.append(parsed_xml_dict[parsed_xml_type])
         temp_comp = parsed_xml_dict[parsed_xml_type].get_component()
         if VERBOSE:
             print(
-                "Generating component dicts for %s::%s"
-                % (temp_comp.get_namespace(), temp_comp.get_name())
+                f"Generating component dicts for {temp_comp.get_namespace()}::{temp_comp.get_name()}"
             )
+
         write_pymods_from_comp(parsed_xml_dict[parsed_xml_type], opt, topology_model)
         if VERBOSE:
             print(
-                "Generated component dicts for %s::%s"
-                % (temp_comp.get_namespace(), temp_comp.get_name())
+                f"Generated component dicts for {temp_comp.get_namespace()}::{temp_comp.get_name()}"
             )
+
 
     topology_model.set_instance_xml_list(xml_list)
 
     if the_parsed_topology_xml.get_namespace():
         if VERBOSE:
             print(
-                "Generated pymods for topology %s::%s"
-                % (
-                    the_parsed_topology_xml.get_namespace(),
-                    the_parsed_topology_xml.get_name(),
-                )
+                f"Generated pymods for topology {the_parsed_topology_xml.get_namespace()}::{the_parsed_topology_xml.get_name()}"
             )
-    else:
-        if VERBOSE:
-            print(
-                "Generated pymods for topology %s"
-                % (the_parsed_topology_xml.get_name())
-            )
+
+    elif VERBOSE:
+        print(f"Generated pymods for topology {the_parsed_topology_xml.get_name()}")
 
 
 def write_pymods_from_comp(the_parsed_component_xml, opt, topology_model):
@@ -254,7 +236,7 @@ def write_pymods_from_comp(the_parsed_component_xml, opt, topology_model):
     # iterate through command instances
     for command_model in component_model.get_commands():
         if VERBOSE:
-            print("Generating command dict %s" % command_model.get_mnemonic())
+            print(f"Generating command dict {command_model.get_mnemonic()}")
         instCommandWriter.DictStartWrite(command_model, topology_model)
         instCommandWriter.DictHeaderWrite(command_model, topology_model)
         instCommandWriter.DictBodyWrite(command_model, topology_model)
@@ -296,7 +278,7 @@ def main():
     ConfigManager.ConfigManager.getInstance()
 
     # Check for BUILD_ROOT env. variable
-    if ("BUILD_ROOT" in os.environ.keys()) == False:
+    if "BUILD_ROOT" not in os.environ.keys():
         print("ERROR: Build root not set to root build path...")
         sys.exit(-1)
     else:
@@ -321,19 +303,16 @@ def main():
     #
     # Check for BUILD_ROOT variable for XML port searches
     #
-    if not opt.build_root_overwrite is None:
+    if opt.build_root_overwrite is not None:
         set_build_roots(opt.build_root_overwrite)
-        if VERBOSE:
-            print(f'BUILD_ROOT set to {",".join(get_build_roots())}')
     else:
-        if ("BUILD_ROOT" in os.environ.keys()) == False:
+        if "BUILD_ROOT" not in os.environ.keys():
             print("ERROR: Build root not set to root build path...")
             sys.exit(-1)
         set_build_roots(os.environ["BUILD_ROOT"])
-        if VERBOSE:
-            print(f'BUILD_ROOT set to {",".join(get_build_roots())}')
-
-    if not "Ai" in xml_filename:
+    if VERBOSE:
+        print(f'BUILD_ROOT set to {",".join(get_build_roots())}')
+    if "Ai" not in xml_filename:
         print("ERROR: Missing Ai at end of file name...")
         raise OSError
     #

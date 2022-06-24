@@ -202,19 +202,17 @@ class TlmPacketParser(object):
                 parsed_xml_dict[comp.get_type()] = comp.get_comp_xml()
             else:
                 PRINT.info(
-                    "Components with type {} aren't in the topology model.".format(
-                        comp.get_type()
-                    )
+                    f"Components with type {comp.get_type()} aren't in the topology model."
                 )
 
+
         xml_list = []
-        for parsed_xml_type in parsed_xml_dict:
-            if parsed_xml_dict[parsed_xml_type] is None:
+        for parsed_xml_type, value in parsed_xml_dict.items():
+            if value is None:
                 print(
-                    "ERROR: XML of type {} is being used, but has not been parsed correctly. Check if file exists or add xml file with the 'import_component_type' tag to the Topology file.".format(
-                        parsed_xml_type
-                    )
+                    f"ERROR: XML of type {parsed_xml_type} is being used, but has not been parsed correctly. Check if file exists or add xml file with the 'import_component_type' tag to the Topology file."
                 )
+
                 raise Exception()
             xml_list.append(parsed_xml_dict[parsed_xml_type])
 
@@ -227,7 +225,7 @@ class TlmPacketParser(object):
             comp_id = int(comp.get_base_id())
             comp_type = comp.get_type()
             if self.verbose:
-                PRINT.debug("Processing %s" % comp_name)
+                PRINT.debug(f"Processing {comp_name}")
 
             # check for included XML types
             self.process_enum_files(parsed_xml_dict[comp_type].get_enum_type_files())
@@ -241,7 +239,7 @@ class TlmPacketParser(object):
                 for chan in parsed_xml_dict[comp_type].get_channels():
                     channel_name = f"{comp_name}.{chan.get_name()}"
                     if self.verbose:
-                        print("Processing Channel %s" % channel_name)
+                        print(f"Processing Channel {channel_name}")
                     chan_type = chan.get_type()
                     # if channel is enum
                     if type(chan_type) == type(tuple()):
